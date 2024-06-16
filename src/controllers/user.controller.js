@@ -4,7 +4,7 @@ import { ApiError } from "../utils/ApiError.js"
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/apiResponse.js";
-
+import jwt from "jsonwebtoken"
 
 //login ka 5th step generate access and refresh token
 const generateAccessAndRefreshToken = async(userId) => {
@@ -106,47 +106,48 @@ const registerUser = asyncHandler( async(req, res) => {
     )
 })
 
-const loginUser = asyncHandler(async(req,res)=>{
-    //1 get data from request body
-    //2 username or email
-    //3 find the user
-    //4 password check
-    //5 access and refreshtoken
-    //6 send cookies
+const loginUser = asyncHandler(async (req, res) =>{
+    // req body -> data
+    // username or email
+    //find the user
+    //password check
+    //access and referesh token
+    //send cookie
 
-    //1
     const {email, username, password} = req.body
-    if(!username || !email){
-        throw new ApiError(400, "username or password is required")
-    }
+    console.log(email);
 
-//3
+    if (!username && !email) {
+        throw new ApiError(400, "username or email is required")
+    // }
+    
+    // Here is an alternative of above code based on logic discussed in video:
+    if (!(username || email)) {
+        throw new ApiError(400, "username or email is required")
+        
+    }
 
     const user = await User.findOne({
-        $or: [{username}, {email}]  //$or mongodb operator here we are checking if we have username or email
+        $or: [{username}, {email}]
     })
-    if(!user){  //email or username kuch bhi nahi mila that means user not exists
-        throw new ApiError(404, "user does not access")
+
+    if (!user) {
+        throw new ApiError(404, "User does not exist")
     }
 
-//4
-    const isPasswordValid = await user.isPasswordCorrect(password)  //ispasswordcorrect function we created in user.controller
-    
-    if(!isPasswordValid){
-        throw newApiError(401, "Invalid password credentials")
+   const isPasswordValid = await user.isPasswordCorrect(password)
+
+   if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid user credentials")
     }
-//5
-    const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id)
 
+   const {accessToken, refreshToken} = await generateAccessAndRefereshTokens(user._id)
 
-    const loggedInUser = await User.findById(user._id).
-    select("-password -refreshToken")
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
     const options = {
-        httponly: true,
+        httpOnly: true,
         secure: true
-        /* isse koi bi manually modify ni krr skta 
-        cookies ko server se hi hoga*/  
     }
 
     return res
@@ -155,14 +156,17 @@ const loginUser = asyncHandler(async(req,res)=>{
     .cookie("refreshToken", refreshToken, options)
     .json(
         new ApiResponse(
-            200,
+            200, 
             {
-                user: loggedInUser, accessToken,refreshToken
+                user: loggedInUser, accessToken, refreshToken
             },
-            "User logged In successfully"
+            "User logged In Successfully"
         )
     )
-})      
+
+}
+})
+   
 
 
 const logoutUser = asyncHandler(async(req, res) =>{
