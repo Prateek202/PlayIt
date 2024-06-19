@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { registerUser } from "../controllers/user.controller.js";
 import { loginUser } from "../controllers/user.controller.js"
-import { logoutUser } from "../controllers/user.controller.js"
+import { logoutUser,refreshAccessToken } from "../controllers/user.controller.js"
 import { upload } from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
     
@@ -31,6 +31,6 @@ run hoga uske end me next() likhe hai to uske bd logoutUser run hoga
 */
 router.route("/logout").post(verifyJWT, logoutUser) 
 
-
+router.route("/refresh-token").post(refreshAccessToken)
 
 export default router 
